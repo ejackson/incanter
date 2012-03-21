@@ -17,9 +17,9 @@
 (ns ^{:doc "This is a port of Zoo from R in order to create the basis
              of a library for time series data.
 
-             This library is built on Parallel Colt 
+             This library is built on Parallel Colt
              (http://sites.google.com/site/piotrwendykier/software/parallelcolt),
-             an extension of the Colt numerics library 
+             an extension of the Colt numerics library
              (http://acs.lbl.gov/~hoschek/colt/).
              "
         :author "David Edgar Liebke"}
@@ -39,20 +39,20 @@
  ;;;;; Start of ROLL functions ;;;;;
 
 (defn roll-mean
-  " 
+  "
    Returns the unweighted mean of the previous n data points.
 
-   References: 
+   References:
    http://en.wikipedia.org/wiki/Moving_average#Simple_moving_average
    http://www.learningclojure.com/2010/03/moving-average-of-list.html
- "  
+ "
   [n coll]
   (map #(/ % n)
        (let [start   (apply + (take n coll))
              diffseq (map   - (drop n coll) coll)]
          (partialsums start diffseq))))
 
-(defn roll-apply 
+(defn roll-apply
   "
    A generic function for applying a function to rolling window of a collection.
 
@@ -60,7 +60,7 @@
    f -- function to be applied
    n -- size of rolling window
    coll -- collection of data
- "  
+ "
   [f n coll]
   (map f (partition n 1 coll)))
 
@@ -76,14 +76,14 @@
 (defn roll-max
   "
    Returns the rolling max of the previous n elements.
- "  
+ "
   [n coll]
   (roll-apply #(apply max %) n coll))
 
 (defn roll-min
   "
    Returns the rolling min of the previous n elements.
- "  
+ "
   [n coll]
   (roll-apply #(apply min %) n coll))
 
@@ -99,12 +99,17 @@
   "Return the :rows of a dataset, with :index dissoc'd.
  Intended to be used internally time series function to get at data."
   [x]
-  (->> x ($ [:not :index]) :rows))
+  ;; The list jiggery poke is due to $ returning a seq, rather than a Dateset of
+  ;; one col in the case of being used with a single index.  This is ugly.
+  (let [d ($ [:not :index] x)]
+    (if (= (count (:column-names x)) 2)
+      (dataset (remove #(= % :index) (:column-names x)) d)
+      (:rows d))))
 
 ;; Credit: http://stackoverflow.com/questions/3249334/test-whether-a-list-contains-a-specific-value-in-clojure
-(defn- in? 
+(defn- in?
   "true if seq contains elm."
-  [seq elm]  
+  [seq elm]
   (some #(= elm %) seq))
 
 ;; Single protocol that convert a value to a Joda value.  These changes
@@ -150,7 +155,7 @@
 (defn within-zoo?
   "Is t between the first and last indices."
   [t z]
-  (t/within? 
+  (t/within?
    (t/interval ($ 0 :index z)  ($ (dec (nrow z)) :index z))
    (to-date-time t)))
 
@@ -247,7 +252,7 @@ each value.  Used for padding zoo in functions that shorten it."
        (apply zoo-row-map- f)
        (remove index-only?)))
 
-  
+
 (comment
 
   ;; This is for thinking about at the core level. Not here.
@@ -255,11 +260,9 @@ each value.  Used for padding zoo in functions that shorten it."
   "Return a dataset with previously missing values replaced with a default value."
   [d v]
   (to-dataset
-   (map merge 
+   (map merge
         (-> d
             :column-names
             (zipmap (repeat v))
             repeat)
         (:rows d)))))
-
-
