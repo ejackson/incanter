@@ -31,7 +31,7 @@
                                  nrow identity-matrix decomp-cholesky decomp-svd
                                  matrix length log10 sum sum-of-squares sel matrix?
                                  cumulative-sum solve vectorize bind-rows to-dataset
-                                 conj-cols $where transform-col col-names)]
+                                 conj-cols $where transform-col col-names dataset)]
          [incanter.stats :only (mean median)])
    (:require [clj-time.core :as t]
              [clj-time.coerce :as c]))
