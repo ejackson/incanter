@@ -198,7 +198,7 @@ That column must contain values that can be coerced into Jodas using the TimeCoe
   "Returns a map with the same keys as x, but with nils for
 each value.  Used for padding zoo in functions that shorten it."
   [x]
-  (zipmap (keys x) (repeat nil)))
+  (zipmap (:column-names x) (repeat nil)))
 
 (defn lag
   "Return the timeseries lagged by n units or 1 if not specified. No time calculations
@@ -210,10 +210,12 @@ each value.  Used for padding zoo in functions that shorten it."
       (map #(select-keys % [:index]) (:rows z))
       (to-dataset
        (concat
-        (take n (repeat (nil-row (-> z coredata first))))
+        (take n (repeat (nil-row (->> z coredata))))
         (->> z
              coredata
+             :rows
              (drop-last n)))))))
+
 
 (defn zoo-apply
   "Behave as for roll-apply but accept a zoo and a single column upon which to roll-apply f. Returns a zoo of the same length as input zoo with pre-pended nils"
