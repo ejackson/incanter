@@ -1,5 +1,5 @@
 (ns incanter.zoo-test
-  (:use clojure.test 
+  (:use clojure.test
         (incanter zoo core stats))
   (:require [clj-time.coerce :as c]))
 
@@ -49,6 +49,8 @@
                       {:date "2012-01-02" :press 98 :temp 32}
                       {:date "2012-01-06" :temp 33}]))
 
+(lag (zoo ds3 :date))
+
 (deftest zoo-test
   (is (zoo ds1))
   (is (zoo ds2 :date))
@@ -85,7 +87,7 @@
 
     (testing "Native Joda as index"
       (is (= ($$ (c/from-string "2012-01-03") :temp ts1) 30)))
-    
+
     (testing "End point overlaps"
       (is (= ($$ "2012-01-01" "2012-01-06" :all ts1)
              ($$ "2012-01-01" "2012-06-10" :all ts1)) "RHS")
@@ -115,11 +117,13 @@
 
 (deftest lag-test
   (let [ts1 (zoo ds1)
-        ls1 (lag ts1)]
+        ls1 (lag ts1)
+        ts3 (zoo ds3 :date)
+        ls3 (lag (zoo ds3 :date))]
     (is (aligned? ts1 ls1) "Indices equal")
     (is (aligned? ts1 (lag ls1)) "Indices equal")
     (is (aligned? ts1 (lag ts1 3)) "Indices equal")
-    
+    (is (aligned? ts3 ls3))
     (is (= ($ 0 [:press :temp] ls1)
            [nil nil]) "Nil pad the front values")
     (is (= ($ 0 [:press :temp] ts1)
@@ -151,6 +155,4 @@
         ms1 (zoo-row-map map-diff ts1 ts1)
         ms2 (zoo-row-map map-diff ts1 (lag ts1))]
     (is (every? (partial = 0) ($ :temp ms1)))
-    ms2
     (is (= ($ :press ms2) [nil -2 4 1 1 1]))))
-    

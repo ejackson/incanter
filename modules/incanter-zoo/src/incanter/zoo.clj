@@ -103,7 +103,7 @@
   ;; one col in the case of being used with a single index.  This is ugly.
   (let [d ($ [:not :index] x)]
     (if (= (count (:column-names x)) 2)
-      (dataset (remove #(= % :index) (:column-names x)) d)
+      (:rows (dataset (remove #(= % :index) (:column-names x)) d))
       (:rows d))))
 
 ;; Credit: http://stackoverflow.com/questions/3249334/test-whether-a-list-contains-a-specific-value-in-clojure
@@ -198,14 +198,13 @@ That column must contain values that can be coerced into Jodas using the TimeCoe
   "Returns a map with the same keys as x, but with nils for
 each value.  Used for padding zoo in functions that shorten it."
   [x]
-  (zipmap (:column-names x) (repeat nil)))
+  (zipmap (keys (first x)) (repeat nil)))
 
 (defn lag
   "Return the timeseries lagged by n units or 1 if not specified. No time calculations
  are made in the index column.  The output timeseries is of the same length as the input."
   ([z] (lag z 1))
   ([z n]
-     {:post [(= (nrow z) (nrow %))]}
      (conj-cols
       (map #(select-keys % [:index]) (:rows z))
       (to-dataset
@@ -213,9 +212,7 @@ each value.  Used for padding zoo in functions that shorten it."
         (take n (repeat (nil-row (->> z coredata))))
         (->> z
              coredata
-             :rows
              (drop-last n)))))))
-
 
 (defn zoo-apply
   "Behave as for roll-apply but accept a zoo and a single column upon which to roll-apply f. Returns a zoo of the same length as input zoo with pre-pended nils"
